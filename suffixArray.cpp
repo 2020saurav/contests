@@ -15,6 +15,17 @@ class SuffixArray
 		}
 		SuffixArray(string s)
 		{
+			/*
+			* Suffix Array
+			* Input: string s (of length n)
+			* Return Value: a pointer to the suffix array of s (0 based index)
+			* Call: int * suffixArray = getSuffixArray(s);
+			* Time: O(n lgn lgn)
+			* Update the size of P as per requirement. P[n][m]. m must be atleast ceil(log2(n))+2 
+			* Similarly update L[n]
+			* Acknowledgement: http://www.stanford.edu/class/cs97si/suffix-array.pdf
+			* Author: Saurav Kumar <2020saurav@gmail.com>
+			*/
 			s = s;
 			n = s.size();
 			m = ceil(log2(n))+2;
