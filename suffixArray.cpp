@@ -58,9 +58,13 @@ int main()
 {
 	SuffixArray s1("banana");
 	SuffixArray * s2 = new SuffixArray("banana");
-	// for(int i=0; i<s2->size(); i++)
-	// 	cout<<s2->SA[i]<<" ";
-	cout<<s1.lcp(1,3);
+	for(int i=0; i<s1.size(); i++)
+		cout<<s1.SA[i]<<" ";
+	cout<<endl;
+	for(int i=0; i<s2->size(); i++)
+		cout<<s2->SA[i]<<" ";
+	cout<<endl;
+	cout<<"LCP(s1,1,3): "<<s1.lcp(1,3);
 	
 	return 0;
 }
