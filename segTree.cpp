@@ -12,31 +12,26 @@ using namespace std;
 
 struct node
 {
-	int a,c;
-	void merge(node &l, node &r)
-	{
-		c = 0;
-		a = min(l.a,r.a);
+	ll sum, carry, range;
+	void merge(node &l, node &r) {
+		sum = l.sum + r.sum;
+		range = l.range + r.range;
 	}
-	void split(node &l, node &r)
-	{
-		l.a += c;
-		r.a += c;
-		l.c += c;
-		r.c += c;
+	void split(node &l, node &r) {
+		l.carry += carry;
+		r.carry += carry;
+		l.sum += (l.range*carry);
+		r.sum += (r.range*carry);
+		carry = 0;
 	}
-	void update(int val)
-	{
-		a = a + val;
-		c = c + val;
+	void update(ll val) {
+		sum += (range*val);
+		carry += val;
 	}
-	void print()
-	{
-		cout<<"a= "<<a;
-		cout<<", c= "<<c<<endl;
+	void print() {
+		cout<<sum<<" "<<carry<<" "<<range<<endl;
 	}
 };
-
 
 class segTree
 {
@@ -44,23 +39,23 @@ class segTree
 	* CREDITS: Triveni Mahatha and Utkarsh Lath
 	*/
 	public:
-		void init(node * A, int n, node nd) {
+		void init(node * A, ll n, node nd) {
 			create(A,n,nd);
 		}
-		void update(int l, int r, int val) {
+		void update(ll l, ll r, ll val) {
 			range_update(1,L,R,l+L,r+L,val);
 		}
-		void update(int idx, int val) {
-			point_update(1,L,R,idx+L,val);
+		void update(ll idx, ll val) {
+			poll_update(1,L,R,idx+L,val);
 		}
-		node query(int l, int r) {
+		node query(ll l, ll r) {
 			return range_query(1,L,R,l+L,r+L);
 		}
-		node query(int idx) {
-			return point_query(1,L,R,idx+L);
+		node query(ll idx) {
+			return poll_query(1,L,R,idx+L);
 		}
 		void print() {
-			for(int i=1;i<sz;i++) { 
+			for(ll i=1;i<sz;i++) { 
 				cout <<" node " << i<<" - "; 
 				Tree[i].print();
 			}
@@ -72,63 +67,63 @@ class segTree
 	private:
 		node * Tree;
 		node identity;
-		int height;		
-		int L,R;
-		int sz;	
-		void create(node * A, int n,node nd) {
+		ll height;		
+		ll L,R;
+		ll sz;	
+		void create(node * A, ll n,node nd) {
 			height = ceil(log2(n));
 			L = 1<<height, R = (L<<1)-1;
 			sz = R+1;
 			identity = nd;
 			Tree = (node*)calloc(sz,sizeof(node));
-			for(int i=0;i<sz;i++)
+			for(ll i=0;i<sz;i++)
 				Tree[i]=nd;
-			for(int i=0;i<n;i++)
+			for(ll i=0;i<n;i++)
 				Tree[L+i]=A[i];
 			initialise(1,L,R);
 			return ;
 		}
-		void initialise(int root, int l, int r) {
+		void initialise(ll root, ll l, ll r) {
 			if(l==r) return;
-			int m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
+			ll m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
 			initialise(lchild,l,m);
 			initialise(rchild,m+1,r);
 			Tree[root].merge(Tree[lchild],Tree[rchild]);
 		}
-		void range_update(int root, int l, int r, int i, int j, int val) {
+		void range_update(ll root, ll l, ll r, ll i, ll j, ll val) {
 			if(i<=l && r<=j) { Tree[root].update(val); return ;}
-			int m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
+			ll m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
 			Tree[root].split(Tree[lchild],Tree[rchild]);
 			if(i<=m) range_update(lchild,l,m,i,j,val);
 			if(j>m) range_update(rchild,m+1,r,i,j,val);
 			Tree[root].merge(Tree[lchild],Tree[rchild]);
 		}
-		void point_update(int root, int l, int r, int idx, int val) {
+		void poll_update(ll root, ll l, ll r, ll idx, ll val) {
 			if(l==r && root==idx){ Tree[root].update(val); return ;}
-			int m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
+			ll m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
 			Tree[root].split(Tree[lchild],Tree[rchild]);
-			if(idx<=m) point_update(lchild,l,m,idx,val);
-			else point_update(rchild,m+1,r,idx,val);
+			if(idx<=m) poll_update(lchild,l,m,idx,val);
+			else poll_update(rchild,m+1,r,idx,val);
 			Tree[root].merge(Tree[lchild],Tree[rchild]);
 		}
-		node range_query(int root, int l, int r, int i, int j) {
+		node range_query(ll root, ll l, ll r, ll i, ll j) {
 			if(i<=l && r<=j) return Tree[root];
-			int m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
+			ll m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
 			node nd1=identity, nd2 = nd1;
 			Tree[root].split(Tree[lchild],Tree[rchild]);
 			if(i<=m) nd1 = range_query(lchild,l,m,i,j);
 			if(j>m) nd2 =  range_query(rchild,m+1,r,i,j);
-			Tree[root].merge(Tree[lchild],Tree[rchild]);
-			node nd; nd.merge(nd1,nd2);
+			Tree[root].merge(Tree[lchild],Tree[rchild]);	
+		node nd; nd.merge(nd1,nd2);
 			return nd;
 		}
-		node point_query(int root, int l, int r, int idx) {
+		node poll_query(ll root, ll l, ll r, ll idx) {
 			if(l==r && root==idx) return Tree[root];
-			int m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
+			ll m = (l+r)>>1, lchild = root<<1, rchild = lchild|1;
 			node nd = identity;
 			Tree[root].split(Tree[lchild],Tree[rchild]);
-			if(idx<=m) nd = point_query(lchild,l,m,idx);
-			else nd = point_query(rchild,m+1,r,idx);
+			if(idx<=m) nd = poll_query(lchild,l,m,idx);
+			else nd = poll_query(rchild,m+1,r,idx);
 			Tree[root].merge(Tree[lchild],Tree[rchild]);
 			return nd;
 		}
@@ -141,57 +136,41 @@ class segTree
 
 int main()
 {
-	segTree s;
-	node A[100];
-	int n,q;
-	int z,x,y,w;
-	cin>>n>>q;
-	node identity = (node){inf};
-	// node identity;
-	// identity.a=inf;
-	for(int i=0;i<n; i++)
-	{
-		cin>>A[i].a; 
-		A[i].c = 0;//doubt
-	}
-	//insert into this.
-	s.init(A,n,identity);
-	s.print();
-	while(q--)
-	{
-		cin>>z;
-		if(z==0)
-		{
-			// point update 
-			cin>> x >>y;
-			s.update(x,y);
-			s.print();
-		}
-		else if(z==1)
-		{
-			// range update
-			cin>>x>>y>>w;
-			s.update(x,y,w);
-			s.print();
-		}
-		else if(z==2)
-		{
-			// point query
-			cin>>x;
-			node nd = s.query(x);
-			s.print();
-			cout << " Value : "<<nd.a<<endl;
-		}
-		else if (z==3)
-		{
-			// range query
-			cin>>x>>y;
-			node nd = s.query(x,y);
-			s.print();
-			cout << " Value : "<<nd.a<<endl;
+	node identity = (node){0,0,0};
+	node A[100005];
 
-
+	ll t,n,c,p,q,v,z;
+	scanf("%lld",&t);
+	while(t--)
+	{
+		scanf("%lld %lld",&n,&c);
+		for(int i=0; i<n; i++)
+		{
+			A[i] = (node){0,0,1};
+		}
+		segTree s;
+		s.init(A,n,identity);
+		// s.print()
+;		while(c--)
+		{
+			scanf("%lld",&z);
+			if(z==0)
+			{
+				// update
+				scanf("%lld %lld %lld",&p,&q,&v);
+				s.update(p-1,q-1,v);
+				// s.print();
+			}
+			else
+			{
+				// query
+				scanf("%lld %lld",&p,&q);
+				node nd = s.query(p-1,q-1);
+				printf("%lld\n",nd.sum);
+				// s.print();
+			}
 		}
 	}
+	
 	return 0;
 }
