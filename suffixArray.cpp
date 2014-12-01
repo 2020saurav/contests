@@ -8,7 +8,7 @@ class SuffixArray
 		int P[65536][18];
 		pair< pair<int,int>,int > L [65536];
 	public:
-		int * SA;
+		int * SA; // pointer to actual suffix array
 		int size()
 		{
 			return n;
@@ -18,8 +18,6 @@ class SuffixArray
 			/*
 			* Suffix Array
 			* Input: string s (of length n)
-			* Return Value: a pointer to the suffix array of s (0 based index)
-			* Call: int * suffixArray = getSuffixArray(s);
 			* Time: O(n lgn lgn)
 			* Update the size of P as per requirement. P[n][m]. m must be atleast ceil(log2(n))+2 
 			* Similarly update L[n]
