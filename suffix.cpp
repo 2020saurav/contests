@@ -3,7 +3,7 @@ using namespace std;
 /*
 * Suffix Array Function
 * Input: string s (of length n)
-* Return Value: a pointer to the suffix array of s
+* Return Value: a pointer to the suffix array of s (0 based indexing)
 * Call: int * suffixArray = getSuffixArray(s);
 * Time: O(n lgn lgn)
 * Update the size of P as per requirement. P[n][m]. m must be atleast ceil(log2(n))+2 
@@ -44,7 +44,7 @@ int* getSuffixArray(string s)
 }
 int main()
 {
-	string s = "cattcat$";
+	string s = "banana";
 	int * a = getSuffixArray(s);
 	for(int i=0; i<s.size(); i++)
 		cout<<a[i]<<" ";
