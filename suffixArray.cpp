@@ -5,7 +5,7 @@ class SuffixArray
 {
 	private:
 		string s; int n,m,step,count;
-		int P[65536][18];
+		int P[18][65536];
 		pair< pair<int,int>,int > L [65536];
 	public:
 		int * SA; // pointer to actual suffix array
@@ -19,7 +19,7 @@ class SuffixArray
 			* Suffix Array
 			* Input: string s (of length n)
 			* Time: O(n lgn lgn)
-			* Update the size of P as per requirement. P[n][m]. m must be atleast ceil(log2(n))+2 
+			* Update the size of P as per requirement. P[m][n]. m must be atleast ceil(log2(n))+2 
 			* Similarly update L[n]
 			* Acknowledgement: http://www.stanford.edu/class/cs97si/suffix-array.pdf
 			* Author: Saurav Kumar <2020saurav@gmail.com>
@@ -66,14 +66,16 @@ class SuffixArray
 int main()
 {
 	SuffixArray s1("banana");
-	SuffixArray * s2 = new SuffixArray("banana");
+	SuffixArray *s2 = new SuffixArray("banana");
 	for(int i=0; i<s1.size(); i++)
 		cout<<s1.SA[i]<<" ";
 	cout<<endl;
-	for(int i=0; i<s2->size(); i++)
-		cout<<s2->SA[i]<<" ";
-	cout<<endl;
-	cout<<"LCP(s1,1,3): "<<s1.lcp(1,3);
+	for(int i=0;i<s1.size(); i++)
+	{
+		for(int j=0; j<s1.size(); j++)
+			cout<<"LCP("<<i<<","<<j<<"): "<<s1.lcp(i,j)<<endl;
+		cout<<endl;
+	}
 	
 	return 0;
 }
