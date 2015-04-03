@@ -1,13 +1,16 @@
 import time
 import numpy as np
-# inputFile = 'assgn6_data_unif.txt'
+import math
 vaFile = 'va-file'
-# queryFile = 'assgn6_querysample_unif.txt'
-inputFile = "small.in"
-queryFile = "small.qr"
+inputFile = 'assgn6_data_unif.txt'
+queryFile = 'assgn6_querysample_unif.txt'
+# inputFile = "small.in"
+# queryFile = "small.qr"
 b = 0
 d = 0
 alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+vaFileLines = ''
+# To keep this structure in RAM
 
 def base62_encode(num):
 	# Base dec(10) num to dec(62) string
@@ -33,6 +36,9 @@ def base62_decode(string):
 		num += alphabet.index(char) * (base ** power)
 		idx += 1
 	return num
+
+def chunkstring(string, length):
+	return list((string[0+i:length+i] for i in range(0, len(string), length)))
 
 def timer():
 	return float("%.6f" % time.time())
@@ -70,9 +76,8 @@ def pointQuery(point):
 	threshold = 1.0/(2**b)
 	quantizedValue = getQuantum(point, threshold)
 	filterList = []
-	lines = open(vaFile).readlines()
 	index = 0
-	for line in lines:
+	for line in vaFileLines:
 		line = line.strip()
 		if line == quantizedValue:
 			filterList.append(index)
@@ -88,11 +93,51 @@ def pointQuery(point):
 			refinedList.append(line)
 	return refinedList			
 
+def minDistance(x, y):
+	dist = 0
+	for i in range(0, len(x)):
+		dist = dist + ((x[i] - y[i]) * (x[i] - y[i]))
+	return math.sqrt(dist) - 1
+	# Loose lower bound on this distance using triangle inequality
+
+def actualDistance(x, y):
+	dist = 0
+	for i in range(0, len(x)):
+		dist = dist + ((x[i] - y[i]) * (x[i] - y[i]))
+	return math.sqrt(dist)
+
 def rangeQuery(center, radius):
-	pass
+	scaledRadius = radius * (2**b)
+	threshold = 1.0/(2**b)
+	qCenter = getQuantum(center, threshold)
+	qCenter = binpad(base62_decode(qCenter), d*b)
+	qcArray = chunkstring(qCenter, b)
+	qcArray = [int(x,2) for x in qcArray]
+	filterList = []
+	index = 0
+	# filter
+	for line in vaFileLines:
+		line = line.strip()
+		point = binpad(base62_decode(line), d*b)
+		pointArray = chunkstring(point, b)
+		pointArray = [int(x,2) for x in pointArray]
+		if minDistance(qcArray, pointArray) <= scaledRadius:
+			filterList.append(index)
+		index += 1
+	# refine
+	lines = open(inputFile).readlines()
+	refinedList = []
+	for data in filterList:
+		line = lines[data].strip()
+		line = line.split('\t')
+		point = line[:d]
+		if actualDistance(center, point) < radius:
+			refinedList.append(line)
+	return refinedList
 
 
 def kNNQuery(center, k):
+	# use priority queue
 	pass
 
 def runQuery(queryFile):
@@ -105,17 +150,18 @@ def runQuery(queryFile):
 		
 		if query[0] == '1':
 			# Point Query
-			point = query[1:]
+			point = query[1:d+1]
 			start = timer()
 			response = pointQuery(point)
-			print response
+			if len(response) > 0:
+				print response
 			end = timer()
 			statsPointQuery.append(end-start)
 		
 		elif query[0] == '2':
 			# Range Query
-			center = query[1:26]
-			radius = query[26]
+			center = query[1:d+1]
+			radius = float(query[d+1])
 			start = timer()
 			response = rangeQuery(center, radius)
 			end = timer()
@@ -123,8 +169,8 @@ def runQuery(queryFile):
 		
 		elif query[0] == '3':
 			# KNN Query
-			center = query[1:26]
-			k = query[26]
+			center = query[1:d+1]
+			k = query[d+1]
 			start = timer()
 			response = kNNQuery(center, k)
 			end = timer()
@@ -135,4 +181,5 @@ if __name__=="__main__":
 	b = int(f[0])
 	d = int(f[1])
 	generateVAFile(inputFile, vaFile)
+	vaFileLines = open(vaFile).readlines()
 	runQuery(queryFile)
