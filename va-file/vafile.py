@@ -1,6 +1,8 @@
 import time
 import numpy as np
 import math
+import Queue
+
 vaFile = 'va-file'
 inputFile = 'assgn6_data_unif.txt'
 queryFile = 'assgn6_querysample_unif.txt'
@@ -135,10 +137,54 @@ def rangeQuery(center, radius):
 			refinedList.append(line)
 	return refinedList
 
+class maxPQ(object):
+	def __init__(self, k=0):
+		self.Q = Queue.PriorityQueue(k)
+	def push(self, priority, value):
+		self.Q.put((-priority, value))
+	def size(self):
+		return self.Q.qsize()
+	def pop(self):
+		return self.Q.get()
+	def empty(self):
+		return self.Q.empty()
 
 def kNNQuery(center, k):
-	# use priority queue
-	pass
+	q = maxPQ() # max priority queue
+	threshold = 1.0/(2**b)
+	qCenter = getQuantum(center, threshold)
+	qCenter = binpad(base62_decode(qCenter), d*b)
+	qcArray = chunkstring(qCenter, b)
+	qcArray = [int(x,2) for x in qcArray]
+	index = 0
+	# filter
+	for line in vaFileLines:
+		line = line.strip()
+		point = binpad(base62_decode(line), d*b)
+		pointArray = chunkstring(point, b)
+		pointArray = [int(x,2) for x in pointArray]
+		distance = actualDistance(qcArray, pointArray)
+
+		if q.size() < k:
+			q.push(distance, index)
+		else:
+			top = q.pop()
+			if top[0] == -distance:
+				q.push(distance, top[1])
+				q.push(distance, index)
+			else:
+				if -top[0] < distance:
+					q.push(-top[0], top[1])
+				else:
+					q.push(distance, index)
+		index += 1
+	filterList = []
+	while not q.empty():
+		top = q.pop()
+		filterList.append(top[1])
+	print len(filterList)
+	# now refine this
+
 
 def runQuery(queryFile):
 	statsPointQuery = []
@@ -170,7 +216,7 @@ def runQuery(queryFile):
 		elif query[0] == '3':
 			# KNN Query
 			center = query[1:d+1]
-			k = query[d+1]
+			k = int(query[d+1])
 			start = timer()
 			response = kNNQuery(center, k)
 			end = timer()
