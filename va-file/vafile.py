@@ -1,21 +1,47 @@
 import time
 import numpy as np
-inputFile = 'assgn6_data_unif.txt'
+# inputFile = 'assgn6_data_unif.txt'
 vaFile = 'va-file'
-queryFile = 'assgn6_querysample_unif.txt'
-# inputFile = "small.in"
-# queryFile = "small.qr"
+# queryFile = 'assgn6_querysample_unif.txt'
+inputFile = "small.in"
+queryFile = "small.qr"
 b = 0
 d = 0
+alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+def base62_encode(num):
+	# Base dec(10) num to dec(62) string
+	if (num == 0):
+		return alphabet[0]
+	arr = []
+	base = len(alphabet)
+	while num:
+		rem = num % base
+		num = num // base
+		arr.append(alphabet[rem])
+	arr.reverse()
+	return ''.join(arr)
+
+def base62_decode(string):
+	# Base dec(62) string to dec(10) num
+	base = len(alphabet)
+	strlen = len(string)
+	num = 0
+	idx = 0
+	for char in string:
+		power = (strlen - (idx + 1))
+		num += alphabet.index(char) * (base ** power)
+		idx += 1
+	return num
 
 def timer():
 	return float("%.6f" % time.time())
 
 def binpad(num, width):
+	# converts number to equivalent binary string of req width by padding
 	v = bin(num)
-	v = v[2:]
+	v = v[2:] # remove '0b'
 	v = '0'*(width-len(v)) + v
-	# TODO swtich to higher base here
 	return v
 
 def getQuantum(data, threshold):
@@ -25,8 +51,8 @@ def getQuantum(data, threshold):
 		while (i+1)*threshold < float(data[index]):
 			i+=1
 		value += binpad(i, b)
+	value = base62_encode(int(value,2))
 	return value
-
 
 def generateVAFile(source, destination):
 	output = []
@@ -39,8 +65,6 @@ def generateVAFile(source, destination):
 	f = open(destination,'w+')
 	for item in output:
 		print>>f, item
-
-# def in
 
 def pointQuery(point):
 	threshold = 1.0/(2**b)
@@ -58,7 +82,6 @@ def pointQuery(point):
 	refinedList = []
 	for data in filterList:
 		line = lines[data].strip()
-		# print line
 		line = line.split('\t')
 		actualPoint = line[:d]
 		if actualPoint == point:
@@ -85,6 +108,7 @@ def runQuery(queryFile):
 			point = query[1:]
 			start = timer()
 			response = pointQuery(point)
+			print response
 			end = timer()
 			statsPointQuery.append(end-start)
 		
