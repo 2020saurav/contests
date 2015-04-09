@@ -2,18 +2,29 @@ import time
 import numpy as np
 import math
 import Queue
+import sys
 
 vaFile = 'va-file'
 inputFile = 'assgn6_data_unif.txt'
-# queryFile = 'assgn6_querysample_unif.txt'
+queryFile = 'assgn6_querysample_unif.txt'
 # inputFile = "small.in"
-queryFile = "small.qr"
+# queryFile = "small.qr"
 b = 0
 d = 0
+pageSize = 2048
+RAM = 2.0
+inRAM = True
+N = 0
 alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-vaFileLines = ''
-# TODO : if can-accomodate in RAM, fill in array or something,
-# else keep file pointer
+vaFileLines = '' # use when data is too large
+vaFileArray = [] # use when data is too small
+
+def getVAFileContent(lineno):
+	if inRAM:
+		return vaFileArray[lineno]
+	else:
+		line = vaFileLines[lineno].strip()
+		return line
 
 def base62_encode(num):
 	# Base dec(10) num to dec(62) string
@@ -80,8 +91,8 @@ def pointQuery(point):
 	quantizedValue = getQuantum(point, threshold)
 	filterList = []
 	index = 0
-	for line in vaFileLines:
-		line = line.strip()
+	for lineno in range(0, N):
+		line = getVAFileContent(lineno)
 		if line == quantizedValue:
 			filterList.append(index)
 		index += 1
@@ -119,8 +130,8 @@ def rangeQuery(center, radius):
 	filterList = []
 	index = 0
 	# filter
-	for line in vaFileLines:
-		line = line.strip()
+	for lineno in range(0, N):
+		line = getVAFileContent(lineno)
 		point = binpad(base62_decode(line), d*b)
 		pointArray = chunkstring(point, b)
 		pointArray = [int(x,2) for x in pointArray]
@@ -159,8 +170,8 @@ def kNNQuery(center, k):
 	qcArray = [int(x,2) for x in qcArray]
 	index = 0
 	# filter
-	for line in vaFileLines:
-		line = line.strip()
+	for lineno in range(0, N):
+		line = getVAFileContent(lineno)
 		point = binpad(base62_decode(line), d*b)
 		pointArray = chunkstring(point, b)
 		pointArray = [int(x,2) for x in pointArray]
@@ -209,7 +220,7 @@ def printQuery(query):
 		print data,
 	print
 
-def runQuery(queryFile):
+def runQuery(printStats = False):
 	statsPointQuery = []
 	statsRangeQuery = []
 	statsKNNQuery = []
@@ -247,12 +258,47 @@ def runQuery(queryFile):
 			end = timer()
 			printQuery(query)
 			printArray(response)
-			statsRangeQuery.append(end-start)
+			statsKNNQuery.append(end-start)
+
+	if printStats:
+		print "\nPOINT QUERY\n------------------"
+		print "Maximum: \t", np.amax(statsPointQuery)
+		print "Minimum: \t", np.amin(statsPointQuery)
+		print "Mean: \t\t",  np.mean(statsPointQuery)
+		print "Std Dev: \t", np.std( statsPointQuery)
+		print "\nRANGE QUERY\n------------------"
+		print "Maximum: \t", np.amax(statsRangeQuery)
+		print "Minimum: \t", np.amin(statsRangeQuery)
+		print "Mean: \t\t",  np.mean(statsRangeQuery)
+		print "Std Dev: \t", np.std( statsRangeQuery)
+		print "\nKNN QUERY\n------------------"
+		print "Maximum: \t", np.amax(statsKNNQuery)
+		print "Minimum: \t", np.amin(statsKNNQuery)
+		print "Mean: \t\t",  np.mean(statsKNNQuery)
+		print "Std Dev: \t", np.std( statsKNNQuery)
 
 if __name__=="__main__":
 	f = open('vafile.config').readlines()
 	b = int(f[0])
 	d = int(f[1])
+	pageSize = int(f[2])
+	RAM = float(f[3])*(2**30)
 	generateVAFile(inputFile, vaFile)
 	vaFileLines = open(vaFile).readlines()
-	runQuery(queryFile)
+	N = len(vaFileLines)
+	size = 0
+	lineno = 0
+	for line in vaFileLines:
+		line = line.strip()
+		size = max(size, sys.getsizeof(line))
+		lineno += 1
+	if RAM >= size*lineno: # Threshold = 0.00042 for my system of encoding VA File
+		print "Loading in RAM"
+		inRAM = True
+		for line in vaFileLines:
+			line = line.strip()
+			vaFileArray.append(line)
+	else:
+		print "Can't load in RAM"
+		inRAM = False
+	runQuery(printStats = True)
