@@ -5,14 +5,15 @@ import Queue
 
 vaFile = 'va-file'
 inputFile = 'assgn6_data_unif.txt'
-queryFile = 'assgn6_querysample_unif.txt'
+# queryFile = 'assgn6_querysample_unif.txt'
 # inputFile = "small.in"
-# queryFile = "small.qr"
+queryFile = "small.qr"
 b = 0
 d = 0
 alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 vaFileLines = ''
-# To keep this structure in RAM
+# TODO : if can-accomodate in RAM, fill in array or something,
+# else keep file pointer
 
 def base62_encode(num):
 	# Base dec(10) num to dec(62) string
@@ -105,7 +106,7 @@ def minDistance(x, y):
 def actualDistance(x, y):
 	dist = 0
 	for i in range(0, len(x)):
-		dist = dist + ((x[i] - y[i]) * (x[i] - y[i]))
+		dist = dist + ((float(x[i]) - float(y[i])) * (float(x[i]) - float(y[i])))
 	return math.sqrt(dist)
 
 def rangeQuery(center, radius):
@@ -129,8 +130,8 @@ def rangeQuery(center, radius):
 	# refine
 	lines = open(inputFile).readlines()
 	refinedList = []
-	for data in filterList:
-		line = lines[data].strip()
+	for index in filterList:
+		line = lines[index].strip()
 		line = line.split('\t')
 		point = line[:d]
 		if actualDistance(center, point) < radius:
@@ -182,9 +183,31 @@ def kNNQuery(center, k):
 	while not q.empty():
 		top = q.pop()
 		filterList.append(top[1])
-	print len(filterList)
-	# now refine this
 
+	r = maxPQ()
+	lines = open(inputFile).readlines()
+	refinedList = []
+	for index in filterList:
+		line = lines[index].strip()
+		line = line.split('\t')
+		point = line[:d]
+		r.push(actualDistance(center, point), line)
+	k = min(k, r.size())
+	for i in range(0, k):
+		refinedList.append(r.pop()[1])
+	return refinedList
+
+def printArray(array):
+	for line in array:
+		for data in line:
+			print data,
+		print
+	print
+
+def printQuery(query):
+	for data in query:
+		print data,
+	print
 
 def runQuery(queryFile):
 	statsPointQuery = []
@@ -199,9 +222,9 @@ def runQuery(queryFile):
 			point = query[1:d+1]
 			start = timer()
 			response = pointQuery(point)
-			if len(response) > 0:
-				print response
 			end = timer()
+			printQuery(query)
+			printArray(response)
 			statsPointQuery.append(end-start)
 		
 		elif query[0] == '2':
@@ -211,8 +234,10 @@ def runQuery(queryFile):
 			start = timer()
 			response = rangeQuery(center, radius)
 			end = timer()
+			printQuery(query)
+			printArray(response)
 			statsRangeQuery.append(end-start)
-		
+
 		elif query[0] == '3':
 			# KNN Query
 			center = query[1:d+1]
@@ -220,6 +245,8 @@ def runQuery(queryFile):
 			start = timer()
 			response = kNNQuery(center, k)
 			end = timer()
+			printQuery(query)
+			printArray(response)
 			statsRangeQuery.append(end-start)
 
 if __name__=="__main__":
