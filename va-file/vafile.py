@@ -5,8 +5,8 @@ import Queue
 import sys
 
 vaFile = 'va-file'
-inputFile = 'assgn6_data_unif.txt'
-queryFile = 'assgn6_querysample_unif.txt'
+inputFile = 'assgn6_data_exp.txt'
+queryFile = 'assgn6_querysample_exp.txt'
 # inputFile = "small.in"
 # queryFile = "small.qr"
 b = 0
@@ -99,8 +99,8 @@ def pointQuery(point):
 	# refine
 	lines = open(inputFile).readlines()
 	refinedList = []
-	for data in filterList:
-		line = lines[data].strip()
+	for index in filterList:
+		line = lines[index].strip()
 		line = line.split('\t')
 		actualPoint = line[:d]
 		if actualPoint == point:
